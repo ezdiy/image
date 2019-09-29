@@ -1,6 +1,10 @@
 package jpeg
 
-//#include <jpeglib.h>
+/*
+#include <stdio.h>
+#include <jpeglib.h>
+extern char *format_message(j_common_ptr cinfo);
+*/
 import "C"
 import (
 	"io"
@@ -9,7 +13,7 @@ import (
 
 //export skipInputData
 func skipInputData(self unsafe.Pointer, n C.long) {
-	r := (*reader)(self)
+	r := (*decoder)(self)
 	skip := int(n)
 	inBuf := int(r.dInfo.src.bytes_in_buffer)
 	next := uintptr(unsafe.Pointer(r.dInfo.src.next_input_byte))
@@ -41,7 +45,7 @@ func skipInputData(self unsafe.Pointer, n C.long) {
 
 //export fillInputBuffer
 func fillInputBuffer(self unsafe.Pointer) bool {
-	r := (*reader)(self)
+	r := (*decoder)(self)
 	got, err := r.Read(r.readBuf[:])
 	if got == 0 {
 		if r.NBRead == 0 {
@@ -55,17 +59,14 @@ func fillInputBuffer(self unsafe.Pointer) bool {
 		r.readBuf[1] = 9
 		got = 2
 	}
-	r.dInfo.src.next_input_byte = (*C.JOCTET)(&r.readBuf[0])
-	r.dInfo.src.bytes_in_buffer = (C.size_t)(got)
-	r.NBRead += got
+	r.setBuffer(got)
 	return true
 }
 
-
 //export outputBuffer
 func outputBuffer(self unsafe.Pointer) bool {
-	w := (*writer)(self)
-	inBuf := bufferSize - int(w.cInfo.dst.free_in_buffer)
+	w := (*encoder)(self)
+	inBuf := bufferSize - int(w.cInfo.dest.free_in_buffer)
 	if inBuf > 0 {
 		wrote, err := w.Write(w.writeBuf[:inBuf])
 		if err != nil {
@@ -75,37 +76,17 @@ func outputBuffer(self unsafe.Pointer) bool {
 			throw("truncated write, %d < %d", wrote, inBuf)
 		}
 	}
-	w.NBWritten += inBuf
-	w.cInfo.dst.free_in_buffer = bufferSize
-	w.cInfo.dst.next_output_byte = &w.cInfo.writeBuf[0]
+	w.setBuffer(inBuf)
 	return true
 }
 
-type callbacks struct {
-	err C.struct_jpeg_error_mgr
-	src C.struct_jpeg_source_mgr
-	dst C.struct_jpeg_destination_mgr
+//export errorPanic
+func errorPanic(msg *C.char) {
+	throw("error_exit(): %s", C.GoString(msg))
 }
 
-// a bit of gymnastics as go doesn't like seeing its own pointers there
-func makeCallbacks(wb *byte) *callbacks {
-	cb := (*callbacks)(unsafe.Pointer(C.malloc(C.size_t(unsafe.Sizeof(callbacks{})))))
-	*cb = callbacks{
-		src: C.struct_jpeg_source_mgr{
-			init_source:       (*[0]byte)(C.nop),
-			term_source:       (*[0]byte)(C.nop),
-			resync_to_restart: (*[0]byte)(C.jpeg_resync_to_restart),
-			fill_input_buffer: (*[0]byte)(C.fillInputBuffer),
-			skip_input_data:   (*[0]byte)(C.skipInputData),
-		},
-		dst: C.struct_jpeg_destination_mgr{
-			init_destination:    (*[0]byte)(C.nop),
-			empty_output_buffer: (*[0]byte)(C.outputBuffer),
-			term_destination:    (*[0]byte)(C.outputBuffer),
-			free_in_buffer:      bufferSize,
-			next_output_byte:    (*C.JOCTET)(unsafe.Pointer(wb)),
-		},
-	}
-	C.jpeg_std_error(&cb.err)
-	return cb
+type callbacks struct {
+	err C.struct_jpeg_error_mgr // must be first
+	src C.struct_jpeg_source_mgr
+	dst C.struct_jpeg_destination_mgr
 }

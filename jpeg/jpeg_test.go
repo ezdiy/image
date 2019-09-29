@@ -1,17 +1,27 @@
 package jpeg
 
 import (
+	"bytes"
 	"image"
-	"log"
-	"os"
+	"image/color"
 	"testing"
 )
 
-func TestDecode(t *testing.T) {
-	f, _ := os.Open("e:/wtf.jpg")
-	var cfg image.Config
-	NewReader(f, &cfg)
-	log.Println(cfg.Width)
-	log.Println(cfg.Height)
-	log.Printf("%v\n",cfg.ColorModel)
+func TestEncodeDecode(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 640, 480))
+	for i := 0; i < 640; i++ {
+		for j := 0; j < 480; j++ {
+			b := byte(i)
+			img.Set(i, j, color.RGBA{179 & b, 128 + b, 64 - b, 255})
+		}
+	}
+	buf := bytes.NewBuffer(nil)
+	err := Encode(buf, img, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = Decode(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
 }
