@@ -83,7 +83,6 @@ var (
 	AllColorspaces = []color.Model{
 		color.GrayModel,
 		color.RGBAModel,
-		color.NRGBAModel,
 		color.YCbCrModel,
 		color.CMYKModel,
 	}

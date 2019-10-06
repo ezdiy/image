@@ -3,6 +3,7 @@ package util
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"math/rand"
 )
 
@@ -116,8 +117,11 @@ func abs(x int) int {
 	return x
 }
 
-func IsGrayscale(img image.Image, fuzz int) bool {
+func IsGray(img image.Image, fuzz int) bool {
 	if _, ok := img.(*image.Gray); ok {
+		return true
+	}
+	if fuzz == -1 || fuzz > 255 {
 		return true
 	}
 	// Otherwise sample few pixels and check if they're gray
@@ -132,3 +136,58 @@ func IsGrayscale(img image.Image, fuzz int) bool {
 	return true
 }
 
+// Attempt conversion of the input image into greyscale. Fuzz is
+// is a threshold when a color picture is considered greyscale,
+// Higher fuzz will accept more of color variance.
+// If picture is above fuzz, "too colorish", nil is returned.
+// If fuzz threshold is -1, the conversion is done always.
+func ToGray(img image.Image, fuzz int) (gr *image.Gray) {
+	// Already greyscale, no need to convert.
+	if im, ok := img.(*image.Gray); ok {
+		return im
+	}
+	if !IsGray(img, fuzz) {
+		return nil
+	}
+	// Fastest: For YUV image, we can just take the Y component
+	if yuv, ok := img.(*image.YCbCr); ok {
+		return &image.Gray{
+			Rect:yuv.Rect,
+			Pix:yuv.Y,
+			Stride:yuv.YStride,
+		}
+	}
+	// Fast: RGB, bias-average
+	var pix []byte
+	var stride int
+	if rgba, ok := img.(*image.RGBA); ok {
+		pix, stride = rgba.Pix, rgba.Stride
+	} else if nrgba, ok := img.(*image.NRGBA); ok {
+		pix, stride = nrgba.Pix, nrgba.Stride
+	}
+	if pix != nil {
+		opix := make([]byte, len(pix)/4)
+		gr = &image.Gray{
+			Pix:opix,
+			Stride:stride/4,
+		}
+		for i, j := 0, 0; i < len(opix); i++ {
+			pp := pix[j:][:4]
+			opix[i] = byte((uint32(pp[0])*19595+uint32(pp[1])*38470+uint32(pp[2])*7471+32768)>>24)
+			j += 4
+		}
+		return
+	}
+	// Slow: use draw
+	return ToModel(img, color.GrayModel).(*image.Gray)
+}
+
+func ToModel(img image.Image, c color.Model) (gr image.Image) {
+	if img.ColorModel() == c {
+		return img
+	}
+	b := img.Bounds()
+	gr = NewImage(c, image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(gr.(draw.Image), gr.Bounds(), img, b.Min, draw.Src)
+	return
+}

@@ -1,6 +1,7 @@
 package openjpeg
 
 import (
+	"image/jpeg"
 	"image/png"
 	"log"
 	"os"
@@ -20,15 +21,15 @@ func xTestDecode(t *testing.T) {
 
 func TestEncode(t *testing.T) {
 	c := newCodec(0)
-	ingpng, _ := os.Open("e:/of.png")
-	img, err := png.Decode(ingpng)
+	ingpng, _ := os.Open("e:/1/in.jpg")
+	img, err := jpeg.Decode(ingpng)
 	if img == nil {
 		t.Fatal(err)
 	}
-	outf, _ := os.Create("e:/of.jp2")
+	outf, _ := os.Create("e:/1/out.jp2")
 	c.WriteSeeker = outf
 	c.encode(img, &Options{
-		BPP:4,
+		BPP:8,
 		Ratio:[]float32{15},
 		NResolutions: 2,
 	})
