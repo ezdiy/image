@@ -148,7 +148,7 @@ func DecodeImage(input io.Reader, opt *DecoderOptions) (img image.Image, err err
 		case C.JCS_YCbCr:
 			config.ColorModel = color.YCbCrModel
 		case C.JCS_RGB:
-			config.ColorModel = color.RGBAModel
+			config.ColorModel = color.NRGBAModel
 		case C.JCS_CMYK:
 			config.ColorModel = color.CMYKModel
 		case C.JCS_YCCK:
@@ -177,7 +177,9 @@ func DecodeImage(input io.Reader, opt *DecoderOptions) (img image.Image, err err
 		}
 		if img == nil {
 			if img = r.tryModel(color.GrayModel, C.JCS_GRAYSCALE); img == nil {
-				img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA)
+				if img = r.tryModel(color.NRGBAModel, C.JCS_EXT_RGBA); img == nil {
+					img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA)
+				}
 			}
 		}
 	case C.JCS_YCbCr:
@@ -185,13 +187,17 @@ func DecodeImage(input io.Reader, opt *DecoderOptions) (img image.Image, err err
 			img = r.tryYCbCr()
 		}
 		if img == nil {
-			if img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA); img == nil {
-				img = r.tryModel(color.GrayModel, C.JCS_GRAYSCALE)
+			if img = r.tryModel(color.NRGBAModel, C.JCS_EXT_RGBA); img == nil {
+				if img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA); img == nil {
+					img = r.tryModel(color.GrayModel, C.JCS_GRAYSCALE)
+				}
 			}
 		}
 	case C.JCS_RGB:
-		if img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA); img == nil {
-			img = r.tryModel(color.GrayModel, C.JCS_GRAYSCALE)
+		if img = r.tryModel(color.NRGBAModel, C.JCS_EXT_RGBA); img == nil {
+			if img = r.tryModel(color.RGBAModel, C.JCS_EXT_RGBA); img == nil {
+				img = r.tryModel(color.GrayModel, C.JCS_GRAYSCALE)
+			}
 		}
 	case C.JCS_CMYK:
 	case C.JCS_YCCK:
@@ -199,7 +205,7 @@ func DecodeImage(input io.Reader, opt *DecoderOptions) (img image.Image, err err
 	default:
 		throw("unknown color model %d", int(di.jpeg_color_space))
 	}
-
+	C.jpeg_finish_decompress(&r.dInfo)
 	r.cleanup(false)
 	return img, nil
 }

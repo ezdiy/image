@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"runtime"
 	"testing"
 )
 
-func TestEncodeDecode(t *testing.T) {
+func one(t *testing.T) {
 	img := image.NewRGBA(image.Rect(0, 0, 640, 480))
 	for i := 0; i < 640; i++ {
 		for j := 0; j < 480; j++ {
@@ -24,4 +25,13 @@ func TestEncodeDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestEncodeDecode(t *testing.T) {
+	one(t)
+	runtime.GC()
+	runtime.GC()
+	one(t)
+	runtime.GC()
+	runtime.GC()
 }

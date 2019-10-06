@@ -3,6 +3,7 @@ package util
 import (
 	"image"
 	"image/color"
+	"math/rand"
 )
 
 // Create a new Image of specified color model.
@@ -107,3 +108,27 @@ func VHDiv2SSR(v, h int) image.YCbCrSubsampleRatio {
 func SSR2VHDiv(i image.YCbCrSubsampleRatio) (v, h int) {
 	return int(yvh[i] >> 4), int(yvh[i] & 15)
 }
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func IsGrayscale(img image.Image, fuzz int) bool {
+	if _, ok := img.(*image.Gray); ok {
+		return true
+	}
+	// Otherwise sample few pixels and check if they're gray
+	for i := 0; i < 256; i++ {
+		r,g,b,_ := img.At(rand.Intn(img.Bounds().Dx()), rand.Intn(img.Bounds().Dy())).RGBA()
+		rg := abs(int(r-g))
+		rb := abs(int(r-b))
+		if abs(rg-rb) > fuzz {
+			return false
+		}
+	}
+	return true
+}
+

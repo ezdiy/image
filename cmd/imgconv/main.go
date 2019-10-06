@@ -43,7 +43,7 @@ func main() {
 	_ = in.Close()
 	out, err := os.Create(os.Args[2])
 	ofmt := filepath.Ext(out.Name())
-	log.Printf("Encoding to into %s\n", out.Name())
+	log.Printf("Encoding into %s\n", out.Name())
 	if encFun, ok := encTab[ofmt]; ok {
 		err := encFun(out, img)
 		if err != nil {

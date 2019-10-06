@@ -133,6 +133,7 @@ func Encode(o io.Writer, img image.Image, opt *Options) error {
 	} else {
 		switch cm {
 		case color.RGBAModel:
+		case color.NRGBAModel:
 			ci.input_components = 4
 			ci.in_color_space = C.JCS_EXT_RGBA
 		case color.GrayModel:

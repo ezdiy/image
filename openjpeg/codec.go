@@ -71,7 +71,6 @@ func newCodec(isRead int) (c *codec) {
 	C.opj_stream_set_skip_function(c.stream, (*[0]byte)(C.skipFunc))
 	runtime.SetFinalizer(c, func(p interface{}) {
 		p.(*codec).destroy()
-
 	})
 	return
 }
