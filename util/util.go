@@ -170,10 +170,11 @@ func ToGray(img image.Image, fuzz int) (gr *image.Gray) {
 		gr = &image.Gray{
 			Pix:opix,
 			Stride:stride/4,
+			Rect:img.Bounds(),
 		}
 		for i, j := 0, 0; i < len(opix); i++ {
 			pp := pix[j:][:4]
-			opix[i] = byte((uint32(pp[0])*19595+uint32(pp[1])*38470+uint32(pp[2])*7471+32768)>>24)
+			opix[i] = byte((uint32(pp[0])*19595+uint32(pp[1])*38470+uint32(pp[2])*7471+32768)>>16)
 			j += 4
 		}
 		return
