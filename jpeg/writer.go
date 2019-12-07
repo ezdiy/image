@@ -174,6 +174,11 @@ func (w *encoder) parseOptions(opt *Options) {
 	// Apply defaults from profile
 	C.jpeg_set_defaults(&w.cInfo)
 
+	// Not progressive, so disable scans
+	if opt.NoProgressive {
+		w.setParam(OptScans, false)
+	}
+
 	// Now apply GUID params
 	for k, v := range ext {
 		w.setParam(k, v)
@@ -182,16 +187,6 @@ func (w *encoder) parseOptions(opt *Options) {
 	// If 0, defaults to 75
 	if opt.Quality > 0 {
 		C.jpeg_set_quality(&w.cInfo, C.int(opt.Quality), bool2c(opt.ForceBaseline))
-	}
-
-	if opt.Progressive {
-		if ci.scan_info == nil { // If GUID didn't set something fancy
-			C.jpeg_simple_progression(&w.cInfo)
-		}
-	} else {
-		// Undo if set by profile
-		ci.scan_info = nil
-		ci.num_scans = 0
 	}
 
 	// The rest of the options are final override

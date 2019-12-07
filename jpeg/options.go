@@ -10,7 +10,7 @@ type Options struct {
 	// Basic settings.
 	Quality             int // Encoding quality 1-100. 0 is special value defaulting to 75.
 	ForceBaseline       bool
-	Progressive         bool    // Encode for progressive "blurry, at first" loading.
+	NoProgressive       bool  // Don't encode multiple scans.
 	FastHufftab         bool    // Disable huff table optimizations, makes saving faster.
 	NoFancyDownsampling bool    // When saving RGB into YCbCr with subsampled chroma
 	SmoothingFactor     int     // Blur input 0-100%, to smooth out ringing around edges.
