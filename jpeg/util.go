@@ -8,6 +8,7 @@ package jpeg
 #cgo !windows OR !amd64 pkg-config: libjpeg
 #include <stdio.h>
 #include <jpeglib.h>
+#include <stdlib.h>
 void nop(void *p) {};
 extern boolean fillInputBuffer(j_decompress_ptr cinfo);
 extern void skipInputData(j_decompress_ptr cinfo, long n);

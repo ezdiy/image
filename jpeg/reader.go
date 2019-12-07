@@ -4,6 +4,7 @@ package jpeg
 
 /*
 #include <stdio.h>
+#include <stdlib.h>
 #include <jpeglib.h>
 // Gray and YCbCr decode planes directly, advancing by subsample scaled stride for each.
 // buf will be laid out one component plane after another. Initial strides are of downsampled_width,

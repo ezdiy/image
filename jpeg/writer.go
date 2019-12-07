@@ -3,6 +3,7 @@ package jpeg
 /*
 #include <stdio.h>
 #include <jpeglib.h>
+#include <stdlib.h>
 
 static void encodeYCbCr(j_compress_ptr c, JSAMPROW y, JSAMPROW cb, JSAMPROW cr, int ys, int cs) {
 	JSAMPROW planes[3][DCTSIZE * c->max_v_samp_factor];
